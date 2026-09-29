@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GenePulse - Clinical Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #060b13;
+    --bg-surface: rgba(13, 23, 38, 0.85);
+    --bg-card: rgba(18, 30, 49, 0.75);
+    --border-glow: rgba(0, 240, 255, 0.22);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --cyan: #00f0ff;
+    --cyan-dim: rgba(0, 240, 255, 0.15);
+    --emerald: #00ffaa;
+    --emerald-dim: rgba(0, 255, 170, 0.15);
+    --crimson: #ff2a5f;
+    --amber: #ffb703;
+    --text-main: #e2f1f8;
+    --text-muted: #8198a6;
+    --font-heading: 'Rajdhani', sans-serif;
+    --font-mono: 'Fira Code', monospace;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  
+  html {
+    background-color: var(--bg-base);
+    overscroll-behavior-y: none;
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    margin: 0; 
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    background-color: var(--bg-base);
+    color: var(--text-main); 
+    font-family: var(--font-body);
+    display: flex; 
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+  }
+  
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: radial-gradient(circle at 50% 0%, #0d1e36 0%, var(--bg-base) 70%);
+  }
+
+  .ic { width: 1em; height: 1em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2;
+        stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.14em; }
+
+  h1, h2, h3 { font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 1px; }
+
+  #sidebar {
+    width: 82px; height: 100vh;
+    background: rgba(4, 9, 16, 0.95);
+    border-right: 1px solid var(--border-glow);
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 20px 0; z-index: 50; flex-shrink: 0;
+    position: sticky; top: 0;
+  }
+  .brand-logo {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--cyan), var(--emerald));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--bg-base); font-size: 1.8rem; margin-bottom: 18px;
+    box-shadow: 0 0 22px var(--cyan-dim);
+  }
+  .nav-item {
+    background: transparent; border: none; width: 64px; height: 60px;
+    border-radius: 12px; color: var(--text-muted); cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: all 0.2s ease; gap: 4px; font-size: 0.65rem; font-family: var(--font-body); font-weight: 600;
+  }
+  .nav-item .ic { width: 1.35rem; height: 1.35rem; }
+  .nav-item:active { color: var(--cyan); background: var(--cyan-dim); }
+  @media (hover: hover) { .nav-item:hover { color: var(--cyan); background: var(--cyan-dim); } }
+  .nav-item.active { color: var(--bg-base); background: var(--cyan); box-shadow: 0 0 16px var(--cyan-dim); }
+
+  #main-viewport {
+    flex: 1; display: flex; flex-direction: column; min-height: 100vh; width: 100%;
+  }
+  
+  header {
+    min-height: 72px; border-bottom: 1px solid var(--border-glow);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    background: rgba(6, 11, 19, 0.85); backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 40;
+  }
+  .header-brand h1 { margin: 0; font-size: 1.45rem; color: var(--text-main); letter-spacing: 1.5px; }
+  .header-brand .sub { margin: 0; font-size: 0.72rem; color: var(--cyan); font-family: var(--font-mono); }
+  
+  .hw-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-surface); border: 1px solid var(--border-glow);
+    padding: 6px 12px; border-radius: 8px; font-family: var(--font-mono); font-size: 0.75rem;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
+
+  .view-pane {
+    flex: 1; padding: 28px 32px; display: none;
+    animation: paneFade 0.25s ease forwards;
+  }
+  .view-pane.active { display: block; }
+  @keyframes paneFade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .glass-card {
+    background: var(--bg-card); border: 1px solid var(--border-glow);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-radius: 16px; padding: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35); margin-bottom: 22px;
+  }
+  .card-title { font-size: 1.2rem; font-weight: 700; color: var(--cyan); margin: 0 0 16px 0; display: flex; align-items: center; gap: 10px; }
+  
+  .btn {
+    background: var(--cyan-dim); border: 1px solid var(--cyan); color: var(--cyan);
+    padding: 12px 18px; border-radius: 8px; font-family: var(--font-heading);
+    font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .btn:hover, .btn:active { background: var(--cyan); color: var(--bg-base); box-shadow: 0 0 16px var(--cyan); }
+  .btn-action { background: var(--cyan); color: var(--bg-base); }
+  .btn-secondary { background: rgba(255,255,255,0.05); border-color: var(--border-subtle); color: var(--text-main); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); color: var(--text-main); box-shadow: none; }
+
+  input, select {
+    width: 100%; padding: 14px; margin-bottom: 14px; border-radius: 8px;
+    background: rgba(4, 9, 16, 0.8); border: 1px solid var(--border-glow);
+    color: var(--text-main); font-family: var(--font-body); font-size: 1rem;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 12px var(--cyan-dim); }
+  label { display: block; font-family: var(--font-heading); font-size: 0.88rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+
+  .terminal-box {
+    background: #02060c; border: 1px solid #1a2936; border-radius: 8px;
+    padding: 14px; font-family: var(--font-mono); font-size: 0.78rem;
+    height: 130px; overflow-y: auto; color: #00ffaa; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
+  }
+  .terminal-line { margin: 3px 0; border-bottom: 1px solid rgba(0,255,170,0.06); padding-bottom: 2px; }
+  .terminal-line .ts { color: #526f84; margin-right: 8px; }
+
+  .scanner-stage { display: none; text-align: center; padding: 36px 0; }
+  .scan-ring {
+    width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 20px;
+    border: 3px solid transparent; border-top-color: var(--cyan); border-bottom-color: var(--emerald);
+    animation: ringSpin 1.4s linear infinite; position: relative;
+    box-shadow: 0 0 28px var(--cyan-dim);
+  }
+  .scan-ring .ic {
+    position: absolute; top: 50%; left: 50%; width: 2.3rem; height: 2.3rem; margin: -1.15rem 0 0 -1.15rem;
+    color: var(--text-main); animation: ringCounterSpin 1.4s linear infinite;
+  }
+  @keyframes ringSpin { 100% { transform: rotate(360deg); } }
+  @keyframes ringCounterSpin { 100% { transform: rotate(-360deg); } }
+  
+  .progress-track { height: 6px; background: rgba(0,0,0,0.6); border-radius: 3px; overflow: hidden; margin-top: 18px; }
+  .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--cyan), var(--emerald)); box-shadow: 0 0 12px var(--cyan); transition: width 0.3s; }
+
+  .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-top: 16px; }
+  .data-cell { background: rgba(4, 9, 16, 0.6); padding: 14px; border-radius: 8px; border-left: 3px solid var(--cyan); }
+  .data-cell .lbl { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; font-family: var(--font-heading); }
+  .data-cell .val { font-size: 1.15rem; font-weight: 700; font-family: var(--font-mono); }
+
+  .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; white-space: nowrap; }
+  th { text-align: left; padding: 12px 10px; color: var(--cyan); font-family: var(--font-heading); border-bottom: 2px solid var(--border-glow); text-transform: uppercase; font-size: 0.85rem; }
+  td { padding: 12px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+  
+  .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-family: var(--font-mono); font-weight: 700; display: inline-block; }
+  .bg-a { background: rgba(255, 42, 95, 0.18); color: #ff5e82; border: 1px solid rgba(255, 42, 95, 0.3); }
+  .bg-b { background: rgba(0, 170, 255, 0.18); color: #38bdf8; border: 1px solid rgba(0, 170, 255, 0.3); }
+  .bg-o { background: rgba(0, 255, 170, 0.18); color: #34d399; border: 1px solid rgba(0, 255, 170, 0.3); }
+  .bg-ab { background: rgba(200, 0, 255, 0.18); color: #c084fc; border: 1px solid rgba(200, 0, 255, 0.3); }
+  .flag-tag { padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; background: rgba(255,42,95,0.15); color: var(--crimson); border: 1px solid var(--crimson); margin: 2px; display: inline-block; }
+
+  .tree-canvas { width: 100%; min-height: 350px; background: rgba(2, 6, 12, 0.6); border-radius: 12px; border: 1px solid var(--border-glow); overflow: auto; }
+
+  .an-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .an-tile { background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: 14px; padding: 16px; border-left: 3px solid var(--cyan); }
+  .an-tile .n { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; line-height: 1; color: var(--text-main); }
+  .an-tile .l { font-size: 0.7rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
+  .an-tile.warn { border-left-color: var(--amber); } .an-tile.bad { border-left-color: var(--crimson); } .an-tile.good { border-left-color: var(--emerald); }
+
+  @media (display-mode: standalone) {
+    header { padding-top: env(safe-area-inset-top, 0px); }
+  }
+
+  @media (max-width: 768px) {
+    body { flex-direction: column; }
+    #main-viewport { display: contents; }
+    header { order: 1; position: static; min-height: 64px; padding: 10px 16px; }
+    #sidebar {
+      order: 2; width: 100%; height: auto; flex-direction: row; justify-content: stretch;
+      gap: 4px; padding: 6px 8px; border-right: none; border-bottom: 1px solid var(--border-glow);
+      position: sticky; top: 0; z-index: 35; background: rgba(4, 9, 16, 0.97);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      overflow: visible;
+    }
+    .view-pane { order: 3; padding: 16px; }
+    .brand-logo { display: none; }
+    .nav-item {
+      flex: 1 1 0; min-width: 0; width: auto; height: auto; padding: 8px 2px;
+      flex-direction: column; gap: 3px; font-size: 0.62rem; border-radius: 10px;
+    }
+    .nav-item .ic { width: 1.05rem; height: 1.05rem; }
+    body { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-clipboard-check" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /> <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /> <path d="m9 14 2 2 4-4" /></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2" /> <rect width="6" height="6" x="9" y="9" rx="1" /> <path d="M15 2v2" /> <path d="M15 20v2" /> <path d="M2 15h2" /> <path d="M2 9h2" /> <path d="M20 15h2" /> <path d="M20 9h2" /> <path d="M9 2v2" /> <path d="M9 20v2" /></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3" /> <path d="M3 5V19A9 3 0 0 0 21 19V5" /> <path d="M3 12A9 3 0 0 0 21 12" /></symbol>
+  <symbol id="i-dna" viewBox="0 0 24 24"><path d="m10 16 1.5 1.5" /> <path d="m14 8-1.5-1.5" /> <path d="M15 2c-1.798 1.998-2.518 3.995-2.807 5.993" /> <path d="m16.5 10.5 1 1" /> <path d="m17 6-2.891-2.891" /> <path d="M2 15c6.667-6 13.333 0 20-6" /> <path d="m20 9 .891.891" /> <path d="M3.109 14.109 4 15" /> <path d="m6.5 12.5 1 1" /> <path d="m7 18 2.891 2.891" /> <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993" /></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <polyline points="7 10 12 15 17 10" /> <line x1="12" x2="12" y1="15" y2="3" /></symbol>
+  <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" /></symbol>
+  <symbol id="i-fingerprint" viewBox="0 0 24 24"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4" /> <path d="M14 13.12c0 2.38 0 6.38-1 8.88" /> <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02" /> <path d="M2 12a10 10 0 0 1 18-6" /> <path d="M2 16h.01" /> <path d="M21.8 16c.2-2 .131-5.354 0-6" /> <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2" /> <path d="M8.65 22c.21-.66.45-1.32.57-2" /> <path d="M9 6.8a6 6 0 0 1 9 5.2v2" /></symbol>
+  <symbol id="i-heart-pulse" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /> <path d="M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27" /></symbol>
+  <symbol id="i-network" viewBox="0 0 24 24"><rect x="16" y="16" width="6" height="6" rx="1" /> <rect x="2" y="16" width="6" height="6" rx="1" /> <rect x="9" y="2" width="6" height="6" rx="1" /> <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" /> <path d="M12 12V8" /></symbol>
+  <symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol>
+  <symbol id="i-satellite-dish" viewBox="0 0 24 24"><path d="M4 10a7.31 7.31 0 0 0 10 10Z" /> <path d="m9 15 3-3" /> <path d="M17 13a6 6 0 0 0-6-6" /> <path d="M21 13A10 10 0 0 0 11 3" /></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5" /> <line x1="12" x2="20" y1="19" y2="19" /></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <polyline points="17 8 12 3 7 8" /> <line x1="12" x2="12" y1="3" y2="15" /></symbol>
+  <symbol id="i-user-plus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <circle cx="9" cy="7" r="4" /> <line x1="19" x2="19" y1="8" y2="14" /> <line x1="22" x2="16" y1="11" y2="11" /></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <circle cx="9" cy="7" r="4" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <path d="M16 3.13a4 4 0 0 1 0 7.75" /></symbol>
+  <symbol id="i-chart-column" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M18 17V9" /> <path d="M13 17V5" /> <path d="M8 17v-3" /></symbol>
+</svg>
+
+<nav id="sidebar">
+  <div class="brand-logo"><svg class="ic" aria-hidden="true"><use href="#i-dna"/></svg></div>
+  <button class="nav-item active" data-target="scan"><svg class="ic" aria-hidden="true"><use href="#i-cpu"/></svg>Intake</button>
+  <button class="nav-item" data-target="directory"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>Directory</button>
+  <button class="nav-item" data-target="blood"><svg class="ic" aria-hidden="true"><use href="#i-droplet"/></svg>Blood</button>
+  <button class="nav-item" data-target="organ"><svg class="ic" aria-hidden="true"><use href="#i-heart-pulse"/></svg>Organ</button>
+  <button class="nav-item" data-target="tree"><svg class="ic" aria-hidden="true"><use href="#i-network"/></svg>Kinship</button>
+  <button class="nav-item" data-target="analytics"><svg class="ic" aria-hidden="true"><use href="#i-chart-column"/></svg>Analytics</button>
+</nav>
+
+<div id="main-viewport">
+  <header>
+    <div class="header-brand">
+      <h1>GenePulse</h1>
+      <div class="sub">Research Prototype</div>
+    </div>
+    <div class="hw-badge">
+      <div class="status-dot"></div>
+      <span>Simulation Mode</span>
+    </div>
+  </header>
+
+  <!-- 1. INTAKE & SCAN VIEW -->
+  <div class="view-pane active" id="view-scan">
+    <div style="background: rgba(255, 183, 3, 0.12); border: 1px solid var(--amber); border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 0.82rem; color: var(--amber); display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 1.2rem;">⚠</span>
+      <div>
+        <strong>RESEARCH PROTOTYPE:</strong> All generated measurements, flags, and kinship/organ matches are simulated for academic demonstration only and must not be used for medical decisions.
+      </div>
+    </div>
+    
+    <div class="glass-card" id="intake-form-card">
+      <h2 class="card-title"><svg class="ic" aria-hidden="true"><use href="#i-user-plus"/></svg> Patient Intake & Calibration</h2>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 16px;">
+        <div>
+          <label>Full Name</label>
+          <input type="text" id="inpName" placeholder="e.g. Rahul Sharma">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label>Age</label>
+            <input type="number" id="inpAge" placeholder="22">
+          </div>
+          <div>
+            <label>Sex</label>
+            <select id="inpSex"><option>Male</option><option>Female</option><option>Other</option></select>
+          </div>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 5px;">
+        <div>
+          <label>Blood Transfusion Flag</label>
+          <select id="inpBloodReq"><option value="false">None</option><option value="true">Needs Blood Transfusion</option></select>
+        </div>
+        <div>
+          <label>Organ Requirement</label>
+          <select id="inpOrganReq"><option value="None">None</option><option>Kidney</option><option>Liver</option><option>Heart</option><option>Cornea</option></select>
+        </div>
+      </div>
+      <button class="btn btn-action" id="execScanBtn" style="width: 100%; justify-content: center; margin-top: 12px;">
+        <svg class="ic" aria-hidden="true"><use href="#i-satellite-dish"/></svg> Execute Sensor Scan
+      </button>
+
+      <div style="margin-top:20px;">
+        <label><svg class="ic" aria-hidden="true"><use href="#i-terminal"/></svg> System Telemetry</label>
+        <div class="terminal-box" id="sysTerminal">
+          <div class="terminal-line"><span class="ts">[SYS]</span> GenePulse System initialized. Ready for scan...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scanner Animation Stage -->
+    <div class="glass-card scanner-stage" id="scanner-anim-card">
+      <div class="scan-ring"><svg class="ic" aria-hidden="true"><use href="#i-fingerprint"/></svg></div>
+      <h2 style="color: var(--cyan); margin:0;" id="scanTitle">Calibrating Sensors...</h2>
+      <p style="color: var(--text-muted); font-family:var(--font-mono); margin:6px 0 0 0;" id="scanSub">Analyzing sample spectrum...</p>
+      <div class="progress-track"><div class="progress-fill" id="scanProgressFill"></div></div>
+    </div>
+
+    <!-- Scan Results Stage -->
+    <div class="glass-card" id="scan-result-card" style="display: none;">
+      <h2 class="card-title"><svg class="ic" aria-hidden="true"><use href="#i-clipboard-check"/></svg> Simulated Analysis Result</h2>
+      <div style="background: rgba(0, 240, 255, 0.08); border: 1px solid var(--border-glow); padding: 8px 12px; border-radius: 6px; font-size: 0.75rem; color: var(--cyan); margin-bottom: 14px; font-family: var(--font-mono);">
+        ℹ All sensor measurements and threshold flags are generated for academic demonstration purposes.
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h3 style="margin:0; font-size: 1.4rem;" id="resName">Name</h3>
+          <p style="color:var(--text-muted); font-family: var(--font-mono); margin:4px 0 0 0;" id="resUID">ID: Awaiting Cloud Sync</p>
+        </div>
+        <div id="resFlagBox"></div>
+      </div>
+      
+      <div class="data-grid">
+        <div class="data-cell"><div class="lbl">Blood Group</div><div class="val" id="resBG">A+</div></div>
+        <div class="data-cell"><div class="lbl">Hemoglobin</div><div class="val" id="resHb">14.2 g/dL</div></div>
+        <div class="data-cell"><div class="lbl">WBC Count</div><div class="val" id="resWBC">7500 /µL</div></div>
+        <div class="data-cell"><div class="lbl">Glucose</div><div class="val" id="resGlucose">98 mg/dL</div></div>
+      </div>
+      
+      <div class="data-cell" style="margin-top: 16px; border-left-color: var(--emerald);">
+        <div class="lbl">Prototype STR Marker Profile</div>
+        <div class="val" id="resCODIS" style="font-size: 0.8rem; color: var(--emerald); word-break: break-all;">[ 10, 14, 15, 8, 22, 16, 12, 11, 13, 9, 12, 14, 29 ]</div>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap;">
+        <button class="btn btn-action" id="saveProfileBtn" style="flex:1; justify-content:center; min-width:130px;"><svg class="ic" aria-hidden="true"><use href="#i-database"/></svg> Save Record</button>
+        <button class="btn btn-secondary" id="discardProfileBtn" style="flex:1; justify-content:center; min-width:130px;"><svg class="ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg> Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. DIRECTORY VIEW -->
+  <div class="view-pane" id="view-directory">
+    <div class="glass-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px;">
+        <h2 class="card-title" style="margin:0;"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg> Patient Directory</h2>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-secondary" id="exportJsonBtn" style="font-size:0.75rem; padding:8px 12px;"><svg class="ic" aria-hidden="true"><use href="#i-download"/></svg> Export</button>
+          <label for="importJsonFile" class="btn btn-secondary" style="font-size:0.75rem; padding:8px 12px; cursor:pointer;"><svg class="ic" aria-hidden="true"><use href="#i-upload"/></svg> Import JSON</label>
+          <input type="file" id="importJsonFile" accept="application/json" style="display:none;">
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table id="directoryTable">
+          <thead><tr><th>UID</th><th>Name</th><th>Age/Sex</th><th>Group</th><th>Hb</th><th>WBC</th><th>Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. BLOOD REGISTRY VIEW -->
+  <div class="view-pane" id="view-blood">
+    <div class="glass-card">
+      <h2 class="card-title"><svg class="ic" aria-hidden="true"><use href="#i-droplet"/></svg> Blood Transfusion Cross-Match</h2>
+      <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;">ABO/Rh Compatibility — Prototype Simulation. Educational model only.</p>
+      <div class="table-responsive">
+        <table id="bloodMatrixTable">
+          <thead><tr><th>Recipient</th><th>Group</th><th>Compatible Donors</th><th>Match Status</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ORGAN REGISTRY VIEW -->
+  <div class="view-pane" id="view-organ">
+    <div class="glass-card">
+      <h2 class="card-title"><svg class="ic" aria-hidden="true"><use href="#i-heart-pulse"/></svg> Organ Match Prototype</h2>
+      <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;">Simulated ranking based on ABO & STR heuristic.</p>
+      <div class="table-responsive">
+        <table id="organMatchTable">
+          <thead><tr><th>Patient</th><th>Organ</th><th>Group</th><th>Top Candidate</th><th>Match Index</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. KINSHIP TREE VIEW -->
+  <div class="view-pane" id="view-tree">
+    <div class="glass-card">
+      <h2 class="card-title"><svg class="ic" aria-hidden="true"><use href="#i-network"/></svg> STR Relationship Prototype</h2>
+      <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">Estimated heuristic patterns from simulated loci.</p>
+      <div class="tree-canvas" id="treeGraphCanvas"></div>
+      <div id="treeLegend" style="margin-top:14px; font-family:var(--font-mono); font-size:0.78rem;"></div>
+    </div>
+  </div>
+
+  <!-- 6. ANALYTICS VIEW -->
+  <div class="view-pane" id="view-analytics">
+    <div id="analyticsRoot"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  let registry = [];
+  const API_BASE_URL = 'https://genepulse-backend.onrender.com';
+
+  // Secure API Auth via temporary memory
+  function getAuthHeader() {
+    let passcode = sessionStorage.getItem('genepulse_passcode');
+    if (!passcode) {
+      passcode = prompt("Enter GenePulse Security Passcode:");
+      if (passcode) {
+        sessionStorage.setItem('genepulse_passcode', passcode.trim());
+      }
+    }
+    return {
+      'Content-Type': 'application/json',
+      'x-api-key': passcode ? passcode.trim() : ''
+    };
+  }
+
+  // Load from Single Source of Truth
+  async function loadPatientsFromCloud() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/patients`, {
+        method: 'GET',
+        headers: getAuthHeader()
+      });
+
+      if (response.status === 401) {
+        alert('Unauthorized: Invalid passcode. Please refresh and try again.');
+        sessionStorage.removeItem('genepulse_passcode');
+        return;
+      }
+      if (!response.ok) throw new Error('Failed to fetch patient records from server.');
+
+      registry = await response.json();
+      renderAll();
+      appendTerminalLog("Synced records from PostgreSQL cloud database.");
+    } catch (err) {
+      console.error("Cloud Sync Error:", err);
+      appendTerminalLog("Failed to reach cloud database.");
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadPatientsFromCloud);
+
+  const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const DONATE_MAP = {
+    "O-": ["O-","O+","A-","A+","B-","B+","AB-","AB+"], "O+": ["O+","A+","B+","AB+"],
+    "A-": ["A-","A+","AB-","AB+"], "A+": ["A+","AB+"],
+    "B-": ["B-","B+","AB-","AB+"], "B+": ["B+","AB+"],
+    "AB-": ["AB-","AB+"], "AB+": ["AB+"],
+  };
+
+  function getBadgeHTML(bg) {
+    let cls = 'bg-o';
+    if(bg.includes('A') && !bg.includes('B')) cls = 'bg-a';
+    if(bg.includes('B') && !bg.includes('A')) cls = 'bg-b';
+    if(bg.includes('AB')) cls = 'bg-ab';
+    return `<span class="badge ${cls}">${bg}</span>`;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function appendTerminalLog(msg) {
+    const box = document.getElementById('sysTerminal');
+    if(!box) return;
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: "numeric", minute: "numeric", second: "numeric" });
+    box.innerHTML += `<div class="terminal-line"><span class="ts">[${time}]</span> ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  }
+
+  let pendingScan = null;
+
+  document.getElementById('execScanBtn').addEventListener('click', () => {
+    const nameInput = document.getElementById('inpName');
+    const name = nameInput.value.trim();
+    if(!name) { alert("Please enter patient name."); nameInput.focus(); return; }
+
+    document.getElementById('intake-form-card').style.display = 'none';
+    document.getElementById('scanner-anim-card').style.display = 'block';
+
+    appendTerminalLog("Initiating diagnostic scan sequence...");
+
+    let pct = 0;
+    const fill = document.getElementById('scanProgressFill');
+    const title = document.getElementById('scanTitle');
+    const sub = document.getElementById('scanSub');
+
+    const interval = setInterval(() => {
+      pct += 20;
+      if(pct > 100) pct = 100;
+      fill.style.width = pct + '%';
+
+      if(pct === 40) { title.innerText = "Analyzing Spectrum..."; sub.innerText = "Reading hemoglobin & cellular markers..."; }
+      else if(pct === 80) { title.innerText = "Amplifying STR Loci..."; sub.innerText = "Processing CODIS genetic profile..."; }
+
+      if(pct === 100) {
+        clearInterval(interval);
+        setTimeout(showResults, 300);
+      }
+    }, 200);
+  });
+
+  function showResults() {
+    const hbVal = (Math.random() * (17.5 - 9.0) + 9.0).toFixed(1);
+    const wbcVal = Math.floor(Math.random() * (13500 - 3800) + 3800);
+    const glucVal = Math.floor(Math.random() * (170 - 70) + 70);
+
+    const flags = [];
+    if(hbVal < 12.0) flags.push("Hb Threshold Flag");
+    if(wbcVal > 11000) flags.push("Elevated WBC Flag");
+    if(glucVal > 140) flags.push("High Glucose Flag");
+    if(document.getElementById('inpBloodReq').value === "true") flags.push("Needs Blood");
+
+    pendingScan = {
+      name: document.getElementById('inpName').value.trim(),
+      age: parseInt(document.getElementById('inpAge').value) || 22,
+      sex: document.getElementById('inpSex').value,
+      needsBlood: document.getElementById('inpBloodReq').value === "true",
+      needsOrgan: document.getElementById('inpOrganReq').value,
+      bg: BLOOD_GROUPS[Math.floor(Math.random() * BLOOD_GROUPS.length)],
+      hb: parseFloat(hbVal),
+      wbc: wbcVal,
+      glucose: glucVal,
+      flags: flags,
+      codis: Array.from({length: 13}, () => Math.floor(Math.random() * 20 + 5))
+    };
+
+    document.getElementById('scanner-anim-card').style.display = 'none';
+    document.getElementById('scan-result-card').style.display = 'block';
+
+    document.getElementById('resName').textContent = pendingScan.name;
+    document.getElementById('resUID').innerText = "ID: Awaiting Cloud Sync";
+    document.getElementById('resBG').innerHTML = getBadgeHTML(pendingScan.bg);
+    document.getElementById('resHb').innerText = pendingScan.hb + " g/dL";
+    document.getElementById('resWBC').innerText = pendingScan.wbc + " /µL";
+    document.getElementById('resGlucose').innerText = pendingScan.glucose + " mg/dL";
+    document.getElementById('resCODIS').innerText = "[ " + pendingScan.codis.join(", ") + " ]";
+
+    const flagBox = document.getElementById('resFlagBox');
+    flagBox.innerHTML = flags.map(f => `<span class="flag-tag">⚠ ${f}</span>`).join(' ');
+
+    appendTerminalLog("Scan complete for " + pendingScan.name);
+  }
+
+  document.getElementById('discardProfileBtn').addEventListener('click', resetForm);
+
+  // Sync to Cloud -> ONLY update UI after success
+  document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+    if(!pendingScan) return;
+    const btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true;
+    btn.innerHTML = `<svg class="ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg> Saving...`;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/patients`, {
+        method: 'POST',
+        headers: getAuthHeader(),
+        body: JSON.stringify(pendingScan)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        alert('Error saving record: ' + (errData.error || 'Unknown error'));
+        btn.disabled = false;
+        btn.innerHTML = `<svg class="ic" aria-hidden="true"><use href="#i-database"/></svg> Save Record`;
+        return;
+      }
+
+      const data = await response.json();
+      appendTerminalLog("Cloud Vault: Record saved securely as " + data.recordId);
+
+      await loadPatientsFromCloud(); // Refresh from DB
+      resetForm();
+    } catch (err) {
+      appendTerminalLog("Error saving to server: Network failure.");
+      alert('Failed to connect to the cloud backend.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="ic" aria-hidden="true"><use href="#i-database"/></svg> Save Record`;
+    }
+  });
+
+  function resetForm() {
+    document.getElementById('inpName').value = '';
+    document.getElementById('inpAge').value = '';
+    document.getElementById('scanProgressFill').style.width = '0%';
+    document.getElementById('scan-result-card').style.display = 'none';
+    document.getElementById('intake-form-card').style.display = 'block';
+    pendingScan = null;
+  }
+
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-pane').forEach(v => v.classList.remove('active'));
+
+      const t = e.currentTarget;
+      t.classList.add('active');
+      const targetView = document.getElementById('view-' + t.dataset.target);
+      if(targetView) {
+        targetView.classList.add('active');
+        renderAll();
+      }
+    });
+  });
+
+  function renderAll() {
+    renderDirectory();
+    renderBlood();
+    renderOrgan();
+    renderTree();
+    renderAnalytics();
+  }
+
+  function renderAnalytics() {
+    const root = document.getElementById('analyticsRoot');
+    if (!root) return;
+    if (!registry.length) {
+      root.innerHTML = `<div class="glass-card"><h2 class="card-title">Analytics</h2>
+        <p style="color:var(--text-muted);">No records found in cloud database.</p></div>`;
+      return;
+    }
+    const n = registry.length;
+    const ages = registry.map(p => Number(p.age) || 0);
+    const avgAge = Math.round(ages.reduce((a, b) => a + b, 0) / n);
+    const flagged = registry.filter(p => (p.flags || []).length).length;
+    const needBlood = registry.filter(p => p.needsBlood).length;
+
+    root.innerHTML = `
+      <div class="an-tiles">
+        <div class="an-tile"><div class="n">${n}</div><div class="l">Total Cloud Profiles</div></div>
+        <div class="an-tile"><div class="n">${avgAge}</div><div class="l">Average Age</div></div>
+        <div class="an-tile ${needBlood ? 'bad' : 'good'}"><div class="n">${needBlood}</div><div class="l">Need Blood</div></div>
+        <div class="an-tile ${flagged ? 'bad' : 'good'}"><div class="n">${flagged}</div><div class="l">Flagged Records</div></div>
+      </div>`;
+  }
+
+  function renderDirectory() {
+    const tbody = document.querySelector('#directoryTable tbody');
+    if(!registry.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No records found in cloud database.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = registry.map(p => `
+      <tr>
+        <td style="font-family:var(--font-mono); font-size:0.8rem; color:var(--text-muted);">${escapeHtml(p.uid)}</td>
+        <td style="font-weight:700;">${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(p.age)}/${escapeHtml(p.sex ? p.sex.charAt(0) : 'U')}</td>
+        <td>${getBadgeHTML(p.bg || 'O+')}</td>
+        <td>${escapeHtml(p.hb)}</td>
+        <td>${escapeHtml(p.wbc)}</td>
+        <td>${p.flags && p.flags.length ? p.flags.map(f => `<span class="flag-tag">${escapeHtml(f)}</span>`).join('') : '<span style="color:var(--emerald);">Normal</span>'}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderBlood() {
+    const tbody = document.querySelector('#bloodMatrixTable tbody');
+    const recipients = registry.filter(p => p.needsBlood);
+    const donors = registry.filter(p => !p.needsBlood);
+
+    if(!recipients.length) {
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No active transfusion requests.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = recipients.map(r => {
+      const valid = donors.filter(d => (DONATE_MAP[d.bg] || []).includes(r.bg));
+      const donorList = valid.length
+        ? valid.map(v => `${escapeHtml(v.name)} (${getBadgeHTML(v.bg)})`).join(', ')
+        : '<span style="color:var(--crimson);">None available</span>';
+
+      return `<tr>
+        <td style="font-weight:700;">${escapeHtml(r.name)}</td>
+        <td>${getBadgeHTML(r.bg)}</td>
+        <td>${donorList}</td>
+        <td><span class="badge ${valid.length ? 'bg-o' : 'bg-a'}">${valid.length} Compatible</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderOrgan() {
+    const tbody = document.querySelector('#organMatchTable tbody');
+    const patients = registry.filter(p => p.needsOrgan && p.needsOrgan !== 'None');
+
+    if(!patients.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No organ requests listed.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = patients.map(p => {
+      const candidates = registry.filter(d => d.uid !== p.uid && (DONATE_MAP[d.bg] || []).includes(p.bg));
+      let best = null, maxScore = 0;
+
+      candidates.forEach(c => {
+        let score = 65;
+        let matches = 0;
+        if (Array.isArray(c.codis) && Array.isArray(p.codis)) {
+          for(let i=0; i<Math.min(c.codis.length, p.codis.length); i++) { 
+            if(Math.abs(c.codis[i] - p.codis[i]) <= 1) matches++; 
+          }
+        }
+        score += matches * 2;
+        if(score > maxScore) { maxScore = score; best = c; }
+      });
+
+      const donorCell = best ? `${escapeHtml(best.name)} (${getBadgeHTML(best.bg)})` : '<span style="color:var(--text-muted);">Searching...</span>';
+      const scoreCell = best ? `${maxScore}` : '-';
+
+      return `<tr>
+        <td style="font-weight:700;">${escapeHtml(p.name)}</td>
+        <td style="color:var(--cyan);">${escapeHtml(p.needsOrgan)}</td>
+        <td>${getBadgeHTML(p.bg)}</td>
+        <td>${donorCell}</td>
+        <td style="font-family:var(--font-mono); font-weight:700; color:var(--emerald);">${scoreCell}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const KIN_TOLERANCE = 1;
+  function sharedLociCount(a, b) {
+    let shared = 0;
+    if (!Array.isArray(a) || !Array.isArray(b)) return 0;
+    for (let i = 0; i < Math.min(a.length, b.length); i++) {
+        if (Math.abs(a[i] - b[i]) <= KIN_TOLERANCE) shared++;
+    }
+    return shared;
+  }
+  function estimateRelationship(a, b) {
+    const shared = sharedLociCount(a, b);
+    if (shared >= 10) return { label: "Estimated: Parent-Child", shared, kind: "parent" };
+    if (shared >= 8) return { label: "Estimated: Sibling", shared, kind: "sibling" };
+    if (shared >= 6) return { label: "Estimated: Distant", shared, kind: "distant" };
+    return { label: "Unrelated", shared, kind: null };
+  }
+  function buildFamilyGraph(list) {
+    const edges = [];
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const rel = estimateRelationship(list[i].codis, list[j].codis);
+        if (rel.kind) edges.push({ a: list[i], b: list[j], ...rel });
+      }
+    }
+    return edges;
+  }
+
+  function renderTree() {
+    const canvas = document.getElementById('treeGraphCanvas');
+    if(!registry.length) {
+      canvas.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding-top:140px;">Add profiles to view pedigree.</p>`;
+      return;
+    }
+
+    const edges = buildFamilyGraph(registry);
+    const n = registry.length, width = 600, height = 320, cx = width/2, cy = height/2, radius = 110;
+    const pos = {};
+    registry.forEach((p, i) => {
+      const angle = (i/n) * 2 * Math.PI;
+      pos[p.uid] = [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+    });
+
+    const strokeFor = { parent: "var(--cyan)", sibling: "var(--emerald)", distant: "var(--text-muted)" };
+    const dashFor = { parent: "0", sibling: "6,4", distant: "2,4" };
+
+    let svg = `<svg width="100%" height="320" viewBox="0 0 ${width} ${height}">`;
+    edges.forEach(e => {
+      const [xa, ya] = pos[e.a.uid], [xb, yb] = pos[e.b.uid];
+      svg += `<line x1="${xa}" y1="${ya}" x2="${xb}" y2="${yb}" stroke="${strokeFor[e.kind]}" stroke-width="2" stroke-dasharray="${dashFor[e.kind]}"/>`;
+    });
+    registry.forEach((p) => {
+      const [x, y] = pos[p.uid];
+      svg += `<circle cx="${x}" cy="${y}" r="20" fill="#060b13" stroke="var(--cyan)" stroke-width="2"/>`;
+      svg += `<text x="${x}" y="${y+4}" font-family="Inter" font-size="10" fill="#fff" text-anchor="middle" font-weight="700">${escapeHtml(p.name.substring(0,3).toUpperCase())}</text>`;
+      svg += `<text x="${x}" y="${y+32}" font-family="Inter" font-size="9" fill="var(--text-muted)" text-anchor="middle">${escapeHtml(p.name.split(' ')[0])}</text>`;
+    });
+
+    svg += `</svg>`;
+    canvas.innerHTML = svg;
+
+    const legend = document.getElementById('treeLegend');
+    if (legend) {
+      legend.innerHTML = edges.length ? `
+        <span style="color:var(--cyan);">— Estimated Parent-Child</span>
+        <span style="color:var(--emerald); margin-left:14px;">┄ Estimated Sibling</span>
+        <span style="color:var(--text-muted); margin-left:14px;">┈ Estimated Distant</span>
+      ` : `<span style="color:var(--text-muted);">No relationships detected among current records.</span>`;
+    }
+  }
+
+  // File Handlers
+  document.getElementById('exportJsonBtn').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(registry, null, 2)], {type: "application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'genepulse_cloud_data.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importJsonFile').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const importedData = JSON.parse(event.target.result);
+        alert(`Detected ${importedData.length} records. Please use API endpoints for bulk uploading to PostgreSQL.`);
+      } catch (err) { alert("Invalid JSON file format."); }
+    };
+    reader.readAsText(file);
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
