@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="robots" content="noindex">
+  <title>GenePulse - Donor Registry</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="/js/theme.js"></script>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div id="boot" class="auth" role="status" aria-live="polite">
+    <div class="auth-brand">
+      <div class="brand-mark"><svg class="ic" aria-hidden="true"><use href="/icons.svg#i-dna"/></svg></div>
+      <p>Loading GenePulse&hellip;</p>
+    </div>
+  </div>
+
+  <div id="auth-root" hidden></div>
+
+  <div id="shell" class="shell" hidden>
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation"></aside>
+    <div class="backdrop" id="backdrop"></div>
+    <div class="main">
+      <header class="topbar">
+        <button class="btn btn-ghost btn-icon menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false"><svg class="ic" aria-hidden="true"><use href="/icons.svg#i-menu"/></svg></button>
+        <h1 id="pageTitle">GenePulse</h1>
+        <span class="spacer"></span>
+        <span class="conn" id="conn" data-state="wait" role="status"><i></i><span class="conn-text">Connecting&hellip;</span></span>
+      </header>
+      <main class="content" id="main" tabindex="-1"></main>
+    </div>
+  </div>
+
+  <dialog id="dlg" aria-labelledby="dlgTitle"></dialog>
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+  <div class="banner net-banner" id="netBanner" role="status" hidden></div>
+
+  <noscript><p>GenePulse needs JavaScript to run.</p></noscript>
+
+  <script src="/vendor/qrcode.js"></script>
+  <script src="/js/core.js"></script>
+  <script src="/js/view-dashboard.js"></script>
+  <script src="/js/view-patients.js"></script>
+  <script src="/js/view-match.js"></script>
+  <script src="/js/view-data.js"></script>
+  <script src="/js/view-admin.js"></script>
+  <script src="/js/main.js"></script>
+</body>
+</html>
